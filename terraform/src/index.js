@@ -56,7 +56,7 @@ exports.helloPubSub = async (event, _context) => {
    */
   async function saveProjectInventoryToObject(projectInventory, fileName) {
     const storage = new Storage();
-    const project_id = await getProjectId();
+    const project_id = getProjectId();
     const bucketname = `project_records_${project_id}`;
     const myBucket = storage.bucket(bucketname);
     const file = myBucket.file(fileName);
@@ -130,7 +130,7 @@ exports.helloPubSub = async (event, _context) => {
 
   async function getApiKey() {
     const secretManagerServiceClient = new SecretManagerServiceClient();
-    const project_id = await getProjectId();
+    const project_id = getProjectId();
     const name = `projects/${project_id}/secrets/SENDGRID_API_KEY/versions/latest`;
     const [version] = await secretManagerServiceClient.accessSecretVersion({ name });
     return version.payload.data.toString();
