@@ -181,7 +181,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getActiveProjectList(projects) {
-    return projects.map(project => {
+    return projects.filter(project => {
       return project.metadata.lifecycleState == 'ACTIVE';
     });
   }
