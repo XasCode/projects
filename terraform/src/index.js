@@ -233,7 +233,7 @@ exports.helloPubSub = async (event, _context) => {
   const activeProjectList = getActiveProjectList(projectList);
   const managedProjectList = getManagedProjectList(message);
   const unmanagedProjectList = getUnmanagedActiveProjectList(activeProjectList, managedProjectList);
-  console.log(`unmanaged: ${JSON.stringify(unmanaged)}`);
+  console.log(`unmanaged: ${JSON.stringify(unmanagedProjectList)}`);
 
   const filename = await saveProjectInventoryToTimestampFilenameObject({
     projectList,
