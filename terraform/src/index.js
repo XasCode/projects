@@ -148,7 +148,7 @@ exports.helloPubSub = async (event, _context) => {
         const msg = {
           to: 'justin@staubach.us',
           from: 'contact@jsdevtools.com',
-          subject: 'Missing Backups',
+          subject: 'Unmanaged Projects',
           html: htmlContent 
         };
         const sendgrid_api_key = await getApiKey();
