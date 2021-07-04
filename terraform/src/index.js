@@ -1,7 +1,6 @@
 const { Resource } = require('@google-cloud/resource');
 const { Storage } = require('@google-cloud/storage');
 const Compute = require('@google-cloud/compute');
-const { google } = require('googleapis');    
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 /**
@@ -134,7 +133,7 @@ exports.helloPubSub = async (event, _context) => {
     const name = `projects/${project_id}/secrets/SENDGRID_API_KEY/versions/latest`;
     const [version] = await secretManagerServiceClient.accessSecretVersion({ name });
     return version.payload.data.toString();
-  };
+  }
       
   /**
    * Send email
@@ -194,7 +193,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getInactiveProjectList(projects) {
-    return projects.map(project => {
+    return projects.filter(project => {
       return project.metadata.lifecycleState !== 'ACTIVE';
     });
   }
@@ -207,7 +206,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getUnmanagedActiveProjectList(activeProjects, managedProjects) {
-    return activeProjects.map(project => {
+    return activeProjects.filter(project => {
       return !managedProjects.includes(project);
     });
   }

@@ -4,7 +4,7 @@ resource "google_storage_bucket" "bucket" {
 }
 
 resource "google_storage_bucket" "project_records" {
-  name = "backup_records_${local.project.id}"
+  name = "project_records_${local.project.id}"
   project = local.project.id
 }
 

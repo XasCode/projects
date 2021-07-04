@@ -33,7 +33,7 @@ resource "google_organization_iam_custom_role" "role-svc-check-projects" {
 }
 
 resource "google_service_account" "svc-check-projects" {
-  account_id   = "svc-check-snapshots-${random_id.random.hex}"
-  display_name = "Service account for automatically setting up disk snapshots."
+  account_id   = "svc-check-projects-${random_id.random.hex}"
+  display_name = "Service account for checking management of projects"
   project      = local.project.id
 }
