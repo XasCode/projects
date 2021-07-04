@@ -16,121 +16,23 @@ exports.helloPubSub = async (event, _context) => {
     : `Inventory disks, check for backup schedules, and create a default schedule if required.`;
   console.log(message);
   
+  /**
+   * Get the project id of running context
+   * 
+   * @returns 
+   */
   async function getProjectId() {
     const compute = new Compute();
     const thisPrj = compute.project();
     const prjData = await thisPrj.get();
-    console.log(`${JSON.stringify(prjData[0].metadata)}`);
-    const prj = prjData[0].metadata.name;
-    console.log(`${JSON.stringify(prj)}`);
-    return prj;
+    return prjData[0].metadata.name;
   }
 
-  // Our inventory object
-  function ProjectDiskInventory() {
-    return {
-      inventory: {},
-      // Add disks to inventory
-      addDisks: function (disks) {
-        disks.forEach(disk => {
-          this.inventory[disk.metadata.selfLink] = {
-            disk: disk.name,
-            diskZone: disk.zone.name,
-            policies: disk.metadata.resourcePolicies !== undefined
-              ? disk.metadata.resourcePolicies.map(curr => (curr.slice(-25)))
-              : [],
-            snapshots: [],
-          };
-        });
-        return this;
-      },
-      // Get list of snapshots and add to inventory matching on disk id
-      addSnapshots: function(snapshots) {
-        snapshots.forEach(snapshot => {
-          this.inventory[snapshot.metadata.sourceDisk] = this.inventory[snapshot.metadata.sourceDisk]
-            ? this.inventory[snapshot.metadata.sourceDisk] 
-            : {snapshots: []};
-          this.inventory[snapshot.metadata.sourceDisk].snapshots.push(snapshot.name.slice(-10));
-        });
-        return this;
-      },
-      // Get list of VMs and add to inventory matching on disk id
-      addVms: function(vms) {
-        vms.forEach(vm => {
-          const disks = vm.metadata.disks;
-          disks.forEach(disk => {
-            this.inventory[disk.source] = this.inventory[disk.source]
-              ? this.inventory[disk.source]
-              : {policies: [], snapshots: []};
-            this.inventory[disk.source].vm = vm.name; 
-          });
-        });
-        return this;
-      },
-      // Print contents
-      debug: function() {
-        Object.keys(this.inventory).map(key => {
-          console.log(`${key}: ${this.inventory[key]}`);
-        });
-        return this;
-      }
-    };
-  }
-
-  // Add disk details to inventory for each project
-  async function getProjectDiskInventoryDetails(projectId) {
-    const compute = new Compute({projectId: projectId});
-
-    const disks = (await compute.getDisks())[0];
-    const snapshots = (await compute.getSnapshots())[0];
-    const vms = (await compute.getVMs())[0];
-
-    const project_disk_inventory = new ProjectDiskInventory();
-    return project_disk_inventory.addDisks(disks).addSnapshots(snapshots).addVms(vms).inventory;
-  }
-
-  // Convert our project disk inventory from map to list, and add project field
-  async function getActiveProjectDiskInventoryDetails(project) {  
-    if (project.metadata.lifecycleState == 'ACTIVE') {
-      const d = await getProjectDiskInventoryDetails(project.id);
-      return Object.keys(d).map(curr => ({
-        project: project.id,
-        id: curr.slice(-40), 
-        disk: d[curr].disk, 
-        diskZone: d[curr].diskZone, 
-        policies: d[curr]['policies'] ? d[curr]['policies'] : [], 
-        snapshots: d[curr]['snapshots'] ? d[curr]['snapshots'] : [], 
-        vm: d[curr].vm
-      }));
-    }
-    return [];
-  }
-
-  // Get list of all projects - note: must have access
-  async function getProjects() {
-    const resource = new Resource();
-    const [projects] = await resource.getProjects();
-    return projects;
-  }
-
-  // Consolidate inventories from each project into one list
-  // return both the full list and a list of disks missing a backup policy
-  async function getAllActiveProjectDiskInventoryDetails() {
-    const disk_inventory_details = [];
-    const projects = await getProjects();
-    
-    for (let count=0; count < projects.length; count++) {
-      disk_inventory_details.push(...(await getActiveProjectDiskInventoryDetails(projects[count])));
-    }
-
-    return {
-      disk_inventory_details,
-      disks_missing_policies: disk_inventory_details.filter(curr => (!curr.policies.length)),
-      disks_with_shorter_default_policies: disk_inventory_details.filter(curr => (curr.policies.length)),
-    };
-  }
-
-  // Generate a timestamp
+  /**
+   * Generate a timestamp
+   * 
+   * @returns 
+   */
   function getTimeStamp() {
     const moment = require('moment');
     const format = "YYYYMMDD-HHmmss"
@@ -138,56 +40,65 @@ exports.helloPubSub = async (event, _context) => {
     return moment(date).format(format);
   }
 
-  // Generate the filename from the timestamp
+  /**
+   * Generate the filename from the timestamp
+   * 
+   * @returns 
+   */
   function getObjectFilename() {
-    const filename = `${getTimeStamp()}.json`;
-    return filename;
+    return `${getTimeStamp()}.json`;
   }
 
-  // Save some JSON (our disk inventory) to the specified filename
-  async function savDiskInventoryToObject(diskInventory, filename) {
+  /**
+   * Save some JSON (our project inventory) to the specified filename
+   * 
+   * @returns
+   */
+  async function saveProjectInventoryToObject(projectInventory, fileName) {
     const storage = new Storage();
     const project_id = await getProjectId();
-    const bucketname = `backup_records_${project_id}`;
+    const bucketname = `project_records_${project_id}`;
     const myBucket = storage.bucket(bucketname);
-    const file = myBucket.file(filename);
-    await file.save(JSON.stringify(diskInventory, undefined, 2));  
+    const file = myBucket.file(fileName);
+    await file.save(JSON.stringify(projectInventory, undefined, 2));  
   }
 
-  // Save our disk inventory
-  async function saveDiskInventoryToTimestampFilenameObject(disk_inventory_details) {
-    const filename = getObjectFilename();
-    await savDiskInventoryToObject(disk_inventory_details, filename);
-    return filename;
+  /**
+   * Save our project inventory
+   * 
+   * @returns
+   */ 
+  async function saveProjectInventoryToTimestampFilenameObject(project_inventory_details) {
+    const fileName = getObjectFilename();
+    await saveProjectInventoryToObject(project_inventory_details, fileName);
+    return fileName;
   }
 
-  // create an html table from a list of disks
-  function createTable(disk_list) {
+  /**
+   * Create an html table from a list of projects
+   * 
+   * @param {*} project_list 
+   * @returns 
+   */
+  function createTable(project_list) {
     return `
       <table style="border: 1px solid black; border-spacing: 0; border-collapse: collapse;">
         <tr>
           <th style="border: 1px solid black; border-spacing: 0;">(index)</th>
-          <th style="border: 1px solid black; border-spacing: 0;">project</th>
           <th style="border: 1px solid black; border-spacing: 0;">id</th>
-          <th style="border: 1px solid black; border-spacing: 0;">disk</th>
-          <th style="border: 1px solid black; border-spacing: 0;">policies</th>
-          <th style="border: 1px solid black; border-spacing: 0;">snapshots</th>
-          <th style="border: 1px solid black; border-spacing: 0;">vm</th>
-        </tr>${disk_list.map( (row, i) => (`
+        </tr>${project_list.map( (row, i) => (`
         <tr>
           <td style="border: 1px solid black; border-spacing: 0;">${i}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${row.project}</td>
           <td style="border: 1px solid black; border-spacing: 0;">${row.id}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${row.disk}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${JSON.stringify(row.policies)}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${JSON.stringify(row.snapshots)}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${row.vm}</td>
         </tr>`)).join('')}
       </table>
     `;
   }
 
-  // object and functions to create HTML output for email
+  /**
+   * Object and functions to create HTML output for email
+   * 
+   */
   const html = {
     content: [],
     // add some text inside <p> tags </p>
@@ -225,8 +136,12 @@ exports.helloPubSub = async (event, _context) => {
     return version.payload.data.toString();
   };
       
-// Send email
-  async function sendEmail(html_content) {
+  /**
+   * Send email
+   * 
+   * @param {*} html_content 
+   */
+  async function sendEmail(htmlContent) {
     const sgMail = require('@sendgrid/mail');
     
     if (true) {
@@ -235,7 +150,7 @@ exports.helloPubSub = async (event, _context) => {
           to: 'justin@staubach.us',
           from: 'contact@jsdevtools.com',
           subject: 'Missing Backups',
-          html: html_content 
+          html: htmlContent 
         };
         const sendgrid_api_key = await getApiKey();
         await sgMail.setApiKey(sendgrid_api_key);
@@ -249,20 +164,86 @@ exports.helloPubSub = async (event, _context) => {
     }
   }
 
+  /**
+   * Returns list of projects in accessible scope
+   * @returns 
+   */
+  async function getProjectList() {
+    const resource = new Resource();
+    const [projects] = await resource.getProjects();
+    return projects;
+  }
+
+  /**
+   * Returns list of projects in active state
+   * @param {*} projects 
+   * @returns 
+   */
+  function getActiveProjectList(projects) {
+    return projects.map(project => {
+      return project.metadata.lifecycleState == 'ACTIVE';
+    });
+  }
+
+  /**
+   * Returns list of projects not in inactive state
+   * @param {*} projects 
+   * @returns 
+   */
+  function getInactiveProjectList(projects) {
+    return projects.map(project => {
+      return project.metadata.lifecycleState !== 'ACTIVE';
+    });
+  }
+
+  /**
+   * Returns list of active projects not in list of managed projects
+   * @param {[string, ...]} activeProjects 
+   * @param {[string, ...]} managedProjects 
+   * @returns 
+   */
+  function getUnmanagedActiveProjectList(activeProjects, managedProjects) {
+    return activeProjects.map(project => {
+      return !managedProjects.contains(project);
+    });
+  }
+
+  /**
+   * Convert json to list of project_ids
+   * @param {string} message_string 
+   * @returns {[string,...]}
+   */
+  function getManagedProjectList(message_string) {
+    const message_json = JSON.parse(message_string);
+    return message_json.map(msg => {
+      return msg.id;
+    });
+  }
+
   /*********
    * Start *
    *********/
+  const projectList = await getProjectList();
+  const inactiveProjectList = getInactiveProjectList(projectList);
+  const activeProjectList = getActiveProjectList(projectList);
+  const managedProjectList = getManagedProjectList(message);
+  const unmanagedProjectList = getUnmanagedActiveProjectList(activeProjectList, managedProjectList);
+  console.log(`unmanaged: ${JSON.stringify(unmanaged)}`);
 
-  const {disk_inventory_details, disks_missing_policies} = await getAllActiveProjectDiskInventoryDetails();
-
-  const filename = await saveDiskInventoryToTimestampFilenameObject(disk_inventory_details);
+  const filename = await saveProjectInventoryToTimestampFilenameObject({
+    projectList,
+    inactiveProjectList,
+    activeProjectList,
+    unmanagedProjectList,
+    managedProjectList,
+  });
 
   const html_content = html
-    .addParagraph(`Saved full disk inventory to: ${filename}`)
-    .addParagraph(`Disks missing backups:`)
-    .addTable(disks_missing_policies)
-    .addParagraph(`All disks:`)
-    .addTable(disk_inventory_details)
+    .addParagraph(`Saved project inventory to: ${filename}`)
+    .addParagraph(`Unmanaged projects:`)
+    .addTable(unmanagedProjectList)
+    .addParagraph(`All active projects:`)
+    .addTable(activeProjectList)
     .join('');
 
   await sendEmail(html_content);
