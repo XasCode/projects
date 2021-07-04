@@ -1,7 +1,7 @@
-const {Resource} = require('@google-cloud/resource');
+const { Resource } = require('@google-cloud/resource');
 const { Storage } = require('@google-cloud/storage');
 const Compute = require('@google-cloud/compute');
-const {google} = require('googleapis');    
+const { google } = require('googleapis');    
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 /**
@@ -166,6 +166,7 @@ exports.helloPubSub = async (event, _context) => {
 
   /**
    * Returns list of projects in accessible scope
+   * 
    * @returns 
    */
   async function getProjectList() {
@@ -176,6 +177,7 @@ exports.helloPubSub = async (event, _context) => {
 
   /**
    * Returns list of projects in active state
+   * 
    * @param {*} projects 
    * @returns 
    */
@@ -187,6 +189,7 @@ exports.helloPubSub = async (event, _context) => {
 
   /**
    * Returns list of projects not in inactive state
+   * 
    * @param {*} projects 
    * @returns 
    */
@@ -198,18 +201,20 @@ exports.helloPubSub = async (event, _context) => {
 
   /**
    * Returns list of active projects not in list of managed projects
+   * 
    * @param {[string, ...]} activeProjects 
    * @param {[string, ...]} managedProjects 
    * @returns 
    */
   function getUnmanagedActiveProjectList(activeProjects, managedProjects) {
     return activeProjects.map(project => {
-      return !managedProjects.contains(project);
+      return !managedProjects.includes(project);
     });
   }
 
   /**
    * Convert json to list of project_ids
+   * 
    * @param {string} message_string 
    * @returns {[string,...]}
    */
