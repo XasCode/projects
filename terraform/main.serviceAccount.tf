@@ -5,7 +5,7 @@ resource "google_organization_iam_custom_role" "role-svc-check-projects" {
   description = "Role / permissions to assign to service account for automatically checking projects."
   permissions = [
     #"compute.disks.list",
-    #"compute.projects.get",
+    "compute.projects.get",
     #"compute.snapshots.list",
     #"compute.instances.list",
     #"compute.regions.list",
