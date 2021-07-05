@@ -171,7 +171,7 @@ exports.helloPubSub = async (event, _context) => {
   async function getProjectList() {
     const resource = new Resource();
     const projects = await resource.getProjects();
-    console.log(`getProjectList: ${projects}`);
+    console.log(`getProjectList: ${JSON.stringify(projects)}`);
     return projects.map(project => (project.metadata.projectId));
   }
 
