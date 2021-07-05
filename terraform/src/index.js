@@ -164,15 +164,35 @@ exports.helloPubSub = async (event, _context) => {
   }
 
   /**
-   * Returns list of projects in accessible scope
+   * Returns details of projects in accessible scope
    * 
    * @returns 
    */
-  async function getProjectList() {
+  async function getProjectDetails() {
     const resource = new Resource();
     const [projects] = await resource.getProjects();
     console.log(`getProjectList: ${JSON.stringify(projects)}`);
+    return projects;
+  }
+
+  /**
+   * Returns list of projects from list of detailed project info
+   * 
+   * @param {*} projects 
+   * @returns 
+   */
+  function getProjectList(projects) {
     return projects.map(project => (project.metadata.projectId));
+  }
+
+  /**
+   * Returns list of projects not in inactive state
+   * 
+   * @param {*} projects 
+   * @returns 
+   */
+   function getInactiveProjectList(projects) {
+    return projects.filter(project => (project.metadata.lifecycleState !== 'ACTIVE')).map(filtered => (filtered.metadata.projectId));
   }
 
   /**
@@ -182,17 +202,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getActiveProjectList(projects) {
-    return projects.filter(project => (project.metadata.lifecycleState == 'ACTIVE'));
-  }
-
-  /**
-   * Returns list of projects not in inactive state
-   * 
-   * @param {*} projects 
-   * @returns 
-   */
-  function getInactiveProjectList(projects) {
-    return projects.filter(project => (project.metadata.lifecycleState !== 'ACTIVE'));
+    return projects.filter(project => (project.metadata.lifecycleState == 'ACTIVE')).map(filtered => (filtered.metadata.projectId));
   }
 
   /**
@@ -220,13 +230,15 @@ exports.helloPubSub = async (event, _context) => {
   /*********
    * Start *
    *********/
-  const projectList = await getProjectList();
+  const projectDetails = await getProjectDetails();                   // [{metadata: {lifecycleState, projectId}, ...]
+  console.log(`details: ${JSON.stringify(projectDetails)}`);
+  const projectList = await getProjectList();                         // ["projectId", ...]
   console.log(`all: ${JSON.stringify(projectList)}`);
-  const inactiveProjectList = getInactiveProjectList(projectList);
+  const inactiveProjectList = getInactiveProjectList(projectDetails); // ["projectId", ...]
   console.log(`inactive: ${JSON.stringify(inactiveProjectList)}`);
-  const activeProjectList = getActiveProjectList(projectList);
+  const activeProjectList = getActiveProjectList(projectDetails);     // ["projectId", ...]
   console.log(`active: ${JSON.stringify(activeProjectList)}`);
-  const managedProjectList = getManagedProjectList(message);
+  const managedProjectList = getManagedProjectList(message);          // ["projectId", ...]
   console.log(`managed: ${managedProjectList}`);
   const unmanagedProjectList = getUnmanagedActiveProjectList(activeProjectList, managedProjectList);
   console.log(`unmanaged: ${JSON.stringify(unmanagedProjectList)}`);
