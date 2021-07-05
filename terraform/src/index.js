@@ -88,7 +88,7 @@ exports.helloPubSub = async (event, _context) => {
         </tr>${project_list.map( (row, i) => (`
         <tr>
           <td style="border: 1px solid black; border-spacing: 0;">${i}</td>
-          <td style="border: 1px solid black; border-spacing: 0;">${row.id}</td>
+          <td style="border: 1px solid black; border-spacing: 0;">${row}</td>
         </tr>`)).join('')}
       </table>
     `;
@@ -171,7 +171,6 @@ exports.helloPubSub = async (event, _context) => {
   async function getProjectDetails() {
     const resource = new Resource();
     const [projects] = await resource.getProjects();
-    console.log(`getProjectList: ${JSON.stringify(projects)}`);
     return projects;
   }
 
@@ -230,18 +229,12 @@ exports.helloPubSub = async (event, _context) => {
   /*********
    * Start *
    *********/
-  const projectDetails = await getProjectDetails();                   // [{metadata: {lifecycleState, projectId}, ...]
-  console.log(`details: ${JSON.stringify(projectDetails)}`);
-  const projectList = await getProjectList(projectDetails);           // ["projectId", ...]
-  console.log(`all: ${JSON.stringify(projectList)}`);
-  const inactiveProjectList = getInactiveProjectList(projectDetails); // ["projectId", ...]
-  console.log(`inactive: ${JSON.stringify(inactiveProjectList)}`);
-  const activeProjectList = getActiveProjectList(projectDetails);     // ["projectId", ...]
-  console.log(`active: ${JSON.stringify(activeProjectList)}`);
-  const managedProjectList = getManagedProjectList(message);          // ["projectId", ...]
-  console.log(`managed: ${managedProjectList}`);
+  const projectDetails = await getProjectDetails();
+  const projectList = await getProjectList(projectDetails);
+  const inactiveProjectList = getInactiveProjectList(projectDetails);
+  const activeProjectList = getActiveProjectList(projectDetails);
+  const managedProjectList = getManagedProjectList(message);
   const unmanagedProjectList = getUnmanagedActiveProjectList(activeProjectList, managedProjectList);
-  console.log(`unmanaged: ${JSON.stringify(unmanagedProjectList)}`);
 
   const filename = await saveProjectInventoryToTimestampFilenameObject({
     projectList,
