@@ -170,8 +170,9 @@ exports.helloPubSub = async (event, _context) => {
    */
   async function getProjectList() {
     const resource = new Resource();
-    const [projects] = await resource.getProjects();
-    return projects.map(project => (project.metadata.project_id));
+    const projects = await resource.getProjects();
+    console.log(`getProjectList: ${projects}`);
+    return projects.map(project => (project.metadata.projectId));
   }
 
   /**
