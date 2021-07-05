@@ -232,7 +232,7 @@ exports.helloPubSub = async (event, _context) => {
    *********/
   const projectDetails = await getProjectDetails();                   // [{metadata: {lifecycleState, projectId}, ...]
   console.log(`details: ${JSON.stringify(projectDetails)}`);
-  const projectList = await getProjectList();                         // ["projectId", ...]
+  const projectList = await getProjectList(projectDetails);           // ["projectId", ...]
   console.log(`all: ${JSON.stringify(projectList)}`);
   const inactiveProjectList = getInactiveProjectList(projectDetails); // ["projectId", ...]
   console.log(`inactive: ${JSON.stringify(inactiveProjectList)}`);
