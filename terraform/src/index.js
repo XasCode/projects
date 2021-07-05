@@ -171,7 +171,7 @@ exports.helloPubSub = async (event, _context) => {
   async function getProjectList() {
     const resource = new Resource();
     const [projects] = await resource.getProjects();
-    return projects;
+    return projects.map(project => (project.metadata.project_id));
   }
 
   /**
@@ -181,9 +181,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getActiveProjectList(projects) {
-    return projects.filter(project => {
-      return project.metadata.lifecycleState == 'ACTIVE';
-    });
+    return projects.filter(project => (project.metadata.lifecycleState == 'ACTIVE'));
   }
 
   /**
@@ -193,9 +191,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getInactiveProjectList(projects) {
-    return projects.filter(project => {
-      return project.metadata.lifecycleState !== 'ACTIVE';
-    });
+    return projects.filter(project => (project.metadata.lifecycleState !== 'ACTIVE'));
   }
 
   /**
@@ -206,9 +202,7 @@ exports.helloPubSub = async (event, _context) => {
    * @returns 
    */
   function getUnmanagedActiveProjectList(activeProjects, managedProjects) {
-    return activeProjects.filter(project => {
-      return !managedProjects.includes(project);
-    });
+    return activeProjects.filter(project => (!managedProjects.includes(project)));
   }
 
   /**
@@ -219,18 +213,20 @@ exports.helloPubSub = async (event, _context) => {
    */
   function getManagedProjectList(message_string) {
     const message_json = JSON.parse(message_string);
-    return message_json.map(msg => {
-      return msg.id;
-    });
+    return message_json.map(msg => (msg.id));
   }
 
   /*********
    * Start *
    *********/
   const projectList = await getProjectList();
+  console.log(`all: ${JSON.stringify(projectList)}`);
   const inactiveProjectList = getInactiveProjectList(projectList);
+  console.log(`inactive: ${JSON.stringify(inactiveProjectList)}`);
   const activeProjectList = getActiveProjectList(projectList);
+  console.log(`active: ${JSON.stringify(activeProjectList)}`);
   const managedProjectList = getManagedProjectList(message);
+  console.log(`managed: ${managedProjectList}`);
   const unmanagedProjectList = getUnmanagedActiveProjectList(activeProjectList, managedProjectList);
   console.log(`unmanaged: ${JSON.stringify(unmanagedProjectList)}`);
 
