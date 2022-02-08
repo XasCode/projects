@@ -9,6 +9,13 @@ data "terraform_remote_state" "terraform-devl" {
 }
 
 locals {
-  project = [for x in data.terraform_remote_state.terraform-devl.outputs.projects.value: x if x.path == var.project_path][0]
-  parent = [for x in data.terraform_remote_state.terraform-devl.outputs.folders.value: x if x.path == "${join("/", slice(split("/", var.project_path), 0, length(split("/", var.project_path))-1))}/"][0]
+  project = {
+          "id": "projects-ed4276",
+          "name": "projects",
+          "number": "869543001932",
+          "path": "dev/xascode/devl/corp/projects"
+        }
+  // [for x in data.terraform_remote_state.terraform-devl.outputs.projects: x if x.path == var.project_path][0]
+  parent = "dev/xascode/devl/corp/"
+  //for x in data.terraform_remote_state.terraform-devl.outputs.folders: x if x.path == "${join("/", slice(split("/", var.project_path), 0, length(split("/", var.project_path))-1))}/"][0]
 }
