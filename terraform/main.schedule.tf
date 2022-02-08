@@ -19,8 +19,8 @@ resource "google_cloud_scheduler_job" "scheduler-job-projects" {
   project     = local.project.id
   pubsub_target {
     topic_name = google_pubsub_topic.pubsub-projects.id
-    data = base64encode("[${join(",",[for x in data.terraform_remote_state.terraform-devl.outputs.projects: "{\"id\": \"${x.id}\"}"])}]") 
-  }
+    data = base64encode("[${join(",",["{\"id\": \"terraform-d7c613\"}","{\"id\": \"snapshots-cf78ac\"}","{\"id\": \"projects-ed4276\"}","{\"id\": \"test-95e574\"}"])}]") 
+  },
   retry_config {
     retry_count = 0
     max_retry_duration = "0s"
