@@ -2,11 +2,16 @@ variable "organization_id" {
   type = string
 }
 
-variable "environment" {
+variable "billing_account" {
+  description = "The account to bill project resources to."
   type = string
 }
 
-variable "project_path" {
+variable "envs" {
+  type = list(string)
+}
+
+variable "environment" {
   type = string
 }
 
@@ -15,5 +20,23 @@ variable "sg" {
 }
 
 variable "parent" {
+  type = object({
+    path = string
+    name = string
+  })
+}
+
+variable "managed" {
+  type = list(
+    object({
+      id = string
+      path = string
+      name = string
+      number = string     
+    })
+  )
+}
+
+variable "src_dir" {
   type = string
 }

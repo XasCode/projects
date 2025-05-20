@@ -1,7 +1,8 @@
 resource "google_organization_iam_custom_role" "role-svc-check-projects" {
-  role_id     = "role_svc_check_projects_${random_id.random.hex}"
+  count       = contains(var.envs, var.environment) ? 1 : 0
+  role_id     = "role_svc_check_projects_${random_id.random[0].hex}"
   org_id      = var.organization_id
-  title       = "role_svc_check_projects_${random_id.random.hex}"
+  title       = "role_svc_check_projects_${random_id.random[0].hex}"
   description = "Role / permissions to assign to service account for automatically checking projects."
   permissions = [
     #"compute.disks.list",
@@ -33,7 +34,8 @@ resource "google_organization_iam_custom_role" "role-svc-check-projects" {
 }
 
 resource "google_service_account" "svc-check-projects" {
-  account_id   = "svc-check-projects-${random_id.random.hex}"
+  count   = contains(var.envs, var.environment) ? 1 : 0
+  project      = module.projects.id
+  account_id   = "svc-check-projects-${random_id.random[0].hex}"
   display_name = "Service account for checking management of projects"
-  project      = local.project.id
 }

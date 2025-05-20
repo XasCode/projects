@@ -1,15 +1,15 @@
-output "project_number" {
-  value = local.project.number
+output "number" {
+  value = module.projects.number
 }
 
-output "project_id" {
-  value = local.project.id
+output "id" {
+  value = module.projects.id
 }
 
-output "project_name" {
-  value = local.project.name
+output "name" {
+  value = module.projects.name
 }
 
-output "project_path" {
-  value = local.project.path
+output "path" {
+  value = module.projects.path
 }
